@@ -59,9 +59,11 @@ class NumberConverter(Converter):
                 return 'tinyint'
             elif precision < 5:
                 return 'smallint'
-            elif precision < 10:
+            # Though number(10), number(19) can actually hold bigger values than int/bigint,
+            # chances are that users want to be interchangeable with MySQL when they uses these precisions
+            elif precision <= 10:
                 return 'int'
-            elif precision < 19:
+            elif precision <= 19:
                 return 'bigint'
             else:
                 return 'decimal({})'.format(precision)

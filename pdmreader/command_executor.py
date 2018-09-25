@@ -223,6 +223,7 @@ class CommandExecutor:
 
         # Use Lombok annotations
         result += '@Data\n'
+        result += '@Table(name = "{}")\n'.format(table.code)
         result += 'public class {} implements Serializable {{\n'.format(upper_camel_case(table.code))
         result += '  private static final long serialVersionUID = 1L;\n\n'
 
