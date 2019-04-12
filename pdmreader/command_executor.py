@@ -1,6 +1,6 @@
 import fnmatch
 import re
-from typing import List
+from typing import List, Optional
 
 from .models import Column, Table, Sequence, Schema
 from .typemapping import TypeMapping
@@ -102,7 +102,8 @@ class CommandExecutor:
 
         def print_column(c: Column):
             if self.horizontal_output:
-                print(self.formatter.format(format_spec, c.code, str(c.data_type), 'True' if c.required else 'False', c.name,
+                print(self.formatter.format(format_spec, c.code, str(c.data_type), 'True' if c.required else 'False',
+                                            c.name,
                                             c.comment))
             else:
                 print('Code: {}'.format(c.code))
@@ -216,7 +217,13 @@ class CommandExecutor:
             word = upper_camel_case(word)
             return word[0].lower() + word[1:]
 
+        # Only support primary key with only one column
+        primary_key_column: Optional[str] = None
+        if table.primary_key and len(table.primary_key.columns) == 1:
+            primary_key_column = table.primary_key.columns[0].name
+
         result = ''
+        imports = {'lombok.Data', 'javax.persistence.Table', 'java.io.Serializable'}
 
         if table.name:
             result += '/** {} */\n'.format(table.name)
@@ -230,11 +237,22 @@ class CommandExecutor:
         for c in table.columns:
             if c.name:
                 result += '  /** {} */\n'.format(c.name)
-            result += '  private {} {};\n'.format(TypeMapping.convert(source_db, 'java', str(c.data_type)),
-                                                  camel_case(c.code))
+            if primary_key_column == c.name:
+                imports.add('javax.persistence.Id')
+                result += '  @Id\n'
+            java_type = TypeMapping.convert(source_db, 'java', str(c.data_type))
+            if java_type == 'Date':
+                imports.add('java.util.Date')
+            result += '  private {} {};\n'.format(java_type, camel_case(c.code))
 
         result += '}'
         result = result.rstrip()
+
+        imports_list = list(imports)
+        imports_list.sort()
+        imports_str = '\n'.join(['import ' + i + ';' for i in imports_list])
+        result = imports_str + '\n\n' + result
+
         print(result)
 
     def print_sequences(self, glob: str = None):
