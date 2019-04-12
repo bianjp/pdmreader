@@ -1,15 +1,16 @@
 import re
 from abc import ABC, abstractmethod
 from typing import List, Dict
+from ..models import DataType, TypeUtil
 
 
 class Converter(ABC):
     @abstractmethod
-    def matches(self, data_type: str) -> bool:
+    def matches(self, data_type: DataType) -> bool:
         pass
 
     @abstractmethod
-    def convert(self, data_type: str) -> str:
+    def convert(self, data_type: DataType) -> str:
         pass
 
 
@@ -18,10 +19,10 @@ class PatternConverter(Converter):
         self.pattern = re.compile(pattern, re.IGNORECASE)
         self.replacement = replacement
 
-    def matches(self, data_type: str) -> bool:
+    def matches(self, data_type: DataType) -> bool:
         return self.pattern.fullmatch(data_type) is not None
 
-    def convert(self, data_type: str) -> str:
+    def convert(self, data_type: DataType) -> str:
         return self.pattern.sub(self.replacement, data_type)
 
 

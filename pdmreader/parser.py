@@ -1,9 +1,10 @@
 import dataclasses
+import re
 from typing import List, Optional
 from xml.etree import ElementTree
-from xml.etree.ElementTree import Element
+from xml.etree.ElementTree import Element, SubElement
 
-from .models import Column, Key, Index, Table, Sequence, Schema
+from .models import TypeUtil, DataType, Column, Key, Index, Table, Sequence, Schema
 
 namespaces = {
     'a': 'attribute',
@@ -61,7 +62,7 @@ class TableParser:
                 name = ''
 
             column = Column(id=column_id, name=name, code=code, required=required, comment=comment,
-                            data_type=data_type, length=length)
+                            data_type=TableParser.parse_data_type(data_type, length))
             columns.append(column)
 
         return columns
@@ -148,11 +149,37 @@ class TableParser:
 
         return indexes
 
+    @staticmethod
+    def str_to_int(string: Optional[str]) -> Optional[int]:
+        if string:
+            return int(string)
+        return None
+
+    @staticmethod
+    def parse_data_type(data_type: str, length: str) -> DataType:
+        m = re.fullmatch('(?P<type>[\w\d]*)(\((?P<precision>\d+)(,\s*(?P<scale>\d+))?\))?', data_type)
+        if not m:
+            raise Exception('Unknown data_type: ' + data_type)
+
+        raw_type = m['type']
+        if TypeUtil.is_numeric(raw_type):
+            precision = TableParser.str_to_int( m.groupdict().get('precision'))
+            scale = TableParser.str_to_int(m.groupdict().get('scale'))
+            return DataType(name=raw_type, precision=precision, scale=scale)
+        elif TypeUtil.is_string(raw_type):
+            parsed_length = TableParser.str_to_int(m.groupdict().get('precision'))
+            if not parsed_length and length:
+                parsed_length = int(length)
+            return DataType(name=raw_type, length=parsed_length)
+
+        return DataType(name=data_type)
+
 
 class PDMParser:
     def __init__(self, file: str):
-        tree: ElementTree = ElementTree.parse(file)
-        self.root = tree.getroot()
+        self.file = file
+        self.tree: ElementTree = ElementTree.parse(file)
+        self.root: Element = self.tree.getroot()
 
     def parse(self) -> Schema:
         db = self.detect_database_type()
@@ -195,3 +222,10 @@ class PDMParser:
         sequences.sort(key=lambda t: t.code)
 
         return sequences
+
+    def find_column_node(self, id: str) -> Optional[Element]:
+        nodes = find_nodes(self.root, "o:RootObject/c:Children/o:Model/c:Tables/o:Table/c:Columns/o:Column[@Id='{}']".format(id))
+        if nodes and len(nodes) > 0:
+            return nodes[0]
+        else:
+            return None

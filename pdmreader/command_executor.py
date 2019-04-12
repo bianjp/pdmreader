@@ -102,11 +102,11 @@ class CommandExecutor:
 
         def print_column(c: Column):
             if self.horizontal_output:
-                print(self.formatter.format(format_spec, c.code, c.data_type, 'True' if c.required else 'False', c.name,
+                print(self.formatter.format(format_spec, c.code, str(c.data_type), 'True' if c.required else 'False', c.name,
                                             c.comment))
             else:
                 print('Code: {}'.format(c.code))
-                print('Type: {}'.format(c.data_type))
+                print('Type: {}'.format(str(c.data_type)))
                 print('Required: {}'.format('True' if c.required else 'False'))
                 print('Name: {}'.format(c.name))
                 print('Comment: {}'.format(c.comment))
@@ -143,7 +143,7 @@ class CommandExecutor:
         result = ''
         result += 'CREATE TABLE `{}` (\n'.format(table.code)
         for column in table.columns:
-            result += '  `{}` {}'.format(column.code, TypeMapping.convert(source_db, 'mysql', column.data_type))
+            result += '  `{}` {}'.format(column.code, TypeMapping.convert(source_db, 'mysql', str(column.data_type)))
             if column.required:
                 result += ' NOT NULL'
             if column.name:
@@ -173,7 +173,7 @@ class CommandExecutor:
         result = ''
         result += 'CREATE TABLE "{}" (\n'.format(table.code)
         for column in table.columns:
-            result += '  "{}" {}'.format(column.code, TypeMapping.convert(source_db, 'oracle', column.data_type))
+            result += '  "{}" {}'.format(column.code, TypeMapping.convert(source_db, 'oracle', str(column.data_type)))
             if column.required:
                 result += ' NOT NULL'
             result += ',\n'
@@ -230,7 +230,7 @@ class CommandExecutor:
         for c in table.columns:
             if c.name:
                 result += '  /** {} */\n'.format(c.name)
-            result += '  private {} {};\n'.format(TypeMapping.convert(source_db, 'java', c.data_type),
+            result += '  private {} {};\n'.format(TypeMapping.convert(source_db, 'java', str(c.data_type)),
                                                   camel_case(c.code))
 
         result += '}'
