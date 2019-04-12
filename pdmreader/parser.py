@@ -157,13 +157,13 @@ class TableParser:
 
     @staticmethod
     def parse_data_type(data_type: str, length: str) -> DataType:
-        m = re.fullmatch('(?P<type>[\w\d]*)(\((?P<precision>\d+)(,\s*(?P<scale>\d+))?\))?', data_type)
+        m = re.fullmatch(r'(?P<type>[\w\d]*)(\((?P<precision>\d+)(,\s*(?P<scale>\d+))?\))?', data_type)
         if not m:
             raise Exception('Unknown data_type: ' + data_type)
 
         raw_type = m['type']
         if TypeUtil.is_numeric(raw_type):
-            precision = TableParser.str_to_int( m.groupdict().get('precision'))
+            precision = TableParser.str_to_int(m.groupdict().get('precision'))
             scale = TableParser.str_to_int(m.groupdict().get('scale'))
             return DataType(name=raw_type, precision=precision, scale=scale)
         elif TypeUtil.is_string(raw_type):
@@ -223,8 +223,10 @@ class PDMParser:
 
         return sequences
 
-    def find_column_node(self, id: str) -> Optional[Element]:
-        nodes = find_nodes(self.root, "o:RootObject/c:Children/o:Model/c:Tables/o:Table/c:Columns/o:Column[@Id='{}']".format(id))
+    def find_column_node(self, node_id: str) -> Optional[Element]:
+        nodes = find_nodes(
+            self.root,
+            "o:RootObject/c:Children/o:Model/c:Tables/o:Table/c:Columns/o:Column[@Id='{}']".format(node_id))
         if nodes and len(nodes) > 0:
             return nodes[0]
         else:

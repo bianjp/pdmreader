@@ -8,7 +8,7 @@ from .unicode_formatter import UnicodeFormatter
 
 
 class CommandExecutor:
-    whitespace_pattern = re.compile('\s+')
+    whitespace_pattern = re.compile(r'\s+')
 
     def __init__(self, schema: Schema, interactive: bool = True):
         self.schema = schema
