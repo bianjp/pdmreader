@@ -10,13 +10,15 @@ from .unicode_formatter import UnicodeFormatter
 class CommandExecutor:
     whitespace_pattern = re.compile('\s+')
 
-    def __init__(self, schema: Schema):
+    def __init__(self, schema: Schema, interactive: bool = True):
         self.schema = schema
         self.formatter = UnicodeFormatter()
         self.horizontal_output = True
-        print('DB: {}'.format(self.schema.db))
-        print('Tables: {}'.format(len(self.schema.tables)))
-        print('Sequences: {}'.format(len(self.schema.sequences)))
+
+        if interactive:
+            print('DB: {}'.format(self.schema.db))
+            print('Tables: {}'.format(len(self.schema.tables)))
+            print('Sequences: {}'.format(len(self.schema.sequences)))
 
     def command(self, command: str):
         command = self.collapse_whitespace(command)

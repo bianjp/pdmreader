@@ -10,14 +10,22 @@ from .parser import PDMParser
 def main():
     parser = argparse.ArgumentParser(description='Interactive PDM reader')
     parser.add_argument('file', help='PDM file')
+    parser.add_argument('command', nargs=argparse.REMAINDER, help='Command and arguments. Optional')
     args = parser.parse_args()
 
     if not os.path.exists(args.file):
         print("File not found: " + args.file, file=sys.stderr)
         return
 
+    # interactive or one-shot command
+    interactive = not args.command or len(args.command) == 0
+
     schema = PDMParser(args.file).parse()
-    executor = CommandExecutor(schema)
+    executor = CommandExecutor(schema, interactive)
+
+    if not interactive:
+        executor.command(' '.join(args.command))
+        return
 
     history_file = os.path.expanduser('~/.pdmreader_history')
     if os.path.exists(history_file):
