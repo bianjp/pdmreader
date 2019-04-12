@@ -1,6 +1,7 @@
 import fnmatch
 import re
 from typing import List, Optional
+import datetime
 
 from .models import Column, Table, Sequence, Schema
 from .typemapping import TypeMapping
@@ -225,10 +226,15 @@ class CommandExecutor:
             primary_key_column = table.primary_key.columns[0].name
 
         result = ''
+        package_str = 'package com.example;'
         imports = {'lombok.Data', 'javax.persistence.Table', 'java.io.Serializable'}
 
+        today = datetime.date.today().isoformat()
+        result += '/**\n'
         if table.name:
-            result += '/** {} */\n'.format(table.name)
+            result += ' * {}\n *\n'.format(table.name)
+        result += ' * @since {}\n'.format(today)
+        result += ' */\n'
 
         # Use Lombok annotations
         result += '@Data\n'
@@ -252,8 +258,14 @@ class CommandExecutor:
 
         imports_list = list(imports)
         imports_list.sort()
-        imports_str = '\n'.join(['import ' + i + ';' for i in imports_list])
-        result = imports_str + '\n\n' + result
+        normal_imports = [p for p in imports_list if not p.startswith('java.') and not p.startswith('javax.')]
+        java_imports = [p for p in imports_list if p.startswith('java.')]
+        javax_imports = [p for p in imports_list if p.startswith('javax.')]
+        imports_str = '\n'.join(['import ' + p + ';' for p in normal_imports]) + '\n\n' + \
+                      '\n'.join(['import ' + p + ';' for p in javax_imports]) + '\n' + \
+                      '\n'.join(['import ' + p + ';' for p in java_imports])
+
+        result = package_str + '\n\n' + imports_str + '\n\n' + result
 
         print(result)
 
