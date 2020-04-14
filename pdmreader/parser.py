@@ -231,3 +231,29 @@ class PDMParser:
             return nodes[0]
         else:
             return None
+
+    def set_column_mandatory(self, column_id: str):
+        column = self.find_column_node(column_id)
+        if not column:
+            return
+
+        nodes = find_nodes(column, 'a:Column.Mandatory')
+        if nodes and len(nodes) > 0:
+            nodes[0].text = '1'
+        else:
+            node = SubElement(column, 'a:Column.Mandatory')
+            node.text = '1'
+
+    def remove_column_mandatory(self, column_id: str):
+        column = self.find_column_node(column_id)
+        if not column:
+            return
+
+        nodes = find_nodes(column, 'a:Column.Mandatory')
+        if nodes and len(nodes) > 0:
+            column.remove(nodes[0])
+
+    def save(self):
+        for ns in namespaces:
+            ElementTree.register_namespace(ns, namespaces[ns])
+        self.tree.write(self.file + '.new', encoding='UTF-8', xml_declaration=True)
